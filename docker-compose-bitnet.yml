@@ -1,0 +1,16 @@
+services:
+  # Open WebUI service without preconfigured backend
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui-bitnet
+    volumes:
+      - open-webui:/app/backend/data
+    ports:
+      - "3002:8080"
+    environment:
+      - 'WEBUI_SECRET_KEY='
+      # Don't set OLLAMA_BASE_URL to allow startup without backend
+    restart: unless-stopped
+
+volumes:
+  open-webui: {}
