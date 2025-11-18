@@ -1,0 +1,44 @@
+services:
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui-bitnet
+    volumes:
+      - open-webui:/app/backend/data
+    ports:
+      - "3002:8080"
+    environment:
+      - 'OPENAI_API_BASE_URL=http://pipelines:9099/v1'  # Routes through pipeline for tracing
+      - 'OPENAI_API_KEY=dummy'  # WebUI requires a key but pipeline ignores auth
+      - 'WEBUI_SECRET_KEY='
+    networks:
+      - app-network
+    depends_on:
+      - pipelines
+    restart: unless-stopped
+
+  pipelines:
+    image: ghcr.io/open-webui/pipelines:main
+    container_name: open-webui-pipelines
+    ports:
+      - "9099:9099"
+    volumes:
+      - ./pipelines-data:/app/pipelines
+    environment:
+      # Langfuse credentials
+      - LANGFUSE_PUBLIC_KEY=pk-lf-c744a3d3-6166-43d5-a578-7bead547d4ea
+      - LANGFUSE_SECRET_KEY=sk-lf-03f98e68-54ea-424b-af23-3acb63f06001
+      - LANGFUSE_HOST=http://host.docker.internal:3001
+      # Backend configuration
+      - OLLAMA_BASE_URL=http://host.docker.internal:8001   # BitNet proxy on host
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+volumes:
+  open-webui: {}
+
+networks:
+  app-network:
+    driver: bridge
